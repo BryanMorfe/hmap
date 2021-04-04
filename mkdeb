@@ -1,0 +1,98 @@
+#!/bin/bash
+
+##### mkdeb Setup #####
+
+## Package Configuration
+pkg_name="hmap"
+pkg_ver=`cat VERSION`
+arch="amd64"
+maintainer="GitHub Developers"
+deps=""
+priority="optional"
+desc="Local DNS Record Utility"
+
+## Project & Directory Setup
+bin_dest=/usr/local/bin
+lib_dest=
+inc_dest=
+conf_dest=
+
+bin_dir="build/bin/"
+inc_dir=
+lib_dir=
+conf_dir=
+
+echo -e "\e[1;32m[  0%] Checking directory integrity\e[0m"
+
+if [ ! -z $bin_dir ] && [ ! -d $bin_dir ]
+then
+	echo -e "\e[1;31mCannot find provided binary directory:\e[0m $bin_dir"
+elif [ ! -z $lib_dir ] && [ ! -d $lib_dir ]
+then
+	echo -e "\e[1;31mCannot find provided library directory:\e[0m $lib_dir"
+elif [ ! -z $inc_dir ] && [ ! -d $inc_dir ]
+then
+	echo -e "\e[1;31mCannot find provided include directory:\e[0m $inc_dir"
+elif [ ! -z $conf_dir ] && [ ! -d $conf_dir ]
+then
+	echo -e "\e[1;31mCannot find provided configuration directory:\e[0m $conf_dir"
+fi
+
+if [ -d dist ]
+then
+	eval rm -r dist
+fi
+
+echo -e "\e[1;32m[ 20%] Building directory tree structure\e[0m"
+
+base_dir=.mkdeb/$pkg_name-$pkg_ver-$arch
+eval mkdir -p $base_dir$bin_dest $base_dir$lib_dest $base_dir$inc_dest $base_dir$conf_dest
+eval mkdir dist
+
+echo -e "\e[1;32m[ 40%] Copying package files\e[0m"
+
+if [ ! -z $bin_dir ]
+then
+	find $bin_dir -perm /a+x -exec cp {} $base_dir$bin_dest \; 2>/dev/null
+fi
+
+if [ ! -z $lib_dir ]
+then
+	eval cp $lib_dir*.so $base_dir$lib_dest
+	eval cp $lib_dir*.a $base_dir$lib_dest
+fi
+
+if [ ! -z $inc_dir ]
+then
+	eval cp $inc_dir*.h* $base_dir$inc_dest
+fi
+
+if [ ! -z $conf_dir ]
+then
+	eval cp $conf_dir* $base_dir$conf_dest 2>/dev/null
+	eval cp $conf_dir.[^.]* $base_dir$conf_dest 2>/dev/null
+fi
+
+eval mkdir -p $base_dir/DEBIAN
+eval touch $base_dir/DEBIAN/conffiles $base_dir/DEBIAN/conffiles
+
+echo -e "\e[1;32m[ 60%] Configuring package\e[0m"
+echo "Package: $pkg_name" >> $base_dir/DEBIAN/control
+echo "Architecture: $arch" >> $base_dir/DEBIAN/control
+echo "Maintainer: $maintainer" >> $base_dir/DEBIAN/control
+echo "Depends: $deps" >> $base_dir/DEBIAN/control
+echo "Priority: $priority" >> $base_dir/DEBIAN/control
+echo "Version: $pkg_ver" >> $base_dir/DEBIAN/control
+echo "Description: $desc" >> $base_dir/DEBIAN/control
+
+echo -e "\e[1;32m[ 80%] Creating deb package\e[0m"
+eval chown -R root:root $base_dir
+eval dpkg-deb --build $base_dir 1> /dev/null 2> /dev/null
+
+echo -e "\e[1;32m[100%] Cleaning up\e[0m"
+eval cp .mkdeb/*.deb dist/.
+eval rm -r .mkdeb
+eval chown -R $USER:$USER dist/
+
+echo -e "\e[1;32m[100%] Done\e[0m"
+
