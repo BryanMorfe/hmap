@@ -228,7 +228,7 @@ int main(int argc, char* argv[])
     }
     else if (opts.op == RMHOST)
     {
-        
+        printf_error("Operation not available. Wait for updates.\n");
     }
     else if (opts.op == SHOWMAPS)
     {
