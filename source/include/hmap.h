@@ -19,7 +19,7 @@
 #define SEVERITY_SUCCESS "\033[32m[*]\033[0m "
 
 #define printf_none(fmt, ...) fprintf(stdout, SEVERITY_NONE fmt, ##__VA_ARGS__)
-#define printf_warning(fmt, ...) fprintf(stdout, SEVERITY_WARNING fmt, ##__VA_ARGS__)
+#define printf_warning(fmt, ...) fprintf(stdout, SEVERITY_WARN fmt, ##__VA_ARGS__)
 #define printf_normal(fmt, ...) fprintf(stdout, SEVERITY_NORMAL fmt, ##__VA_ARGS__)
 #define printf_error(fmt, ...) fprintf(stderr, SEVERITY_ERROR fmt, ##__VA_ARGS__)
 #define printf_success(fmt, ...) fprintf(stdout, SEVERITY_SUCCESS fmt, ##__VA_ARGS__)
@@ -42,6 +42,7 @@ enum
     ADDMAP,
     RMHOST,
     SHOWMAPS,
+    VALIDATE,
 
     HMAX_OP
 };

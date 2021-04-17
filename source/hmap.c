@@ -39,6 +39,47 @@ static void print_hmap(struct hmap* _hmap)
     }
 }
 
+static void print_validation_res(struct validate_context* v_context)
+{
+    if (v_context->vcode == VCODE_NONE)
+    {
+        printf_success("File validated successfully!\n");
+    }
+    else if (v_context->vcode == VCODE_WARNING)
+    {
+        printf_warning("Warning:");
+        fprintf(stderr,
+                "%s:%lu:%u: \033[1;35mwarning: %s\n",
+                opts.hosts_fpath,
+                v_context->line_num,
+                v_context->char_num,
+                ERR_MSGS[v_context->err_code]);
+        fprintf(stderr, "%s\n", v_context->line);
+
+        for (uint16_t i = 0; i < v_context->char_num; ++i)
+            fprintf(stderr, " ");
+
+        fprintf(stderr, "\033[1;35m^\033[0m\n");
+    }
+    else
+    {
+        printf_error("Error:");
+        fprintf(stderr,
+                "%s:%lu:%u: \033[1;31merror:\033[0m %s\n",
+                opts.hosts_fpath,
+                v_context->line_num,
+                v_context->char_num,
+                ERR_MSGS[v_context->err_code]);
+        
+        fprintf(stderr, "%s\n", v_context->line);
+
+        for (uint16_t i = 0; i < v_context->char_num; ++i)
+            fprintf(stderr, " ");
+
+        fprintf(stderr, "\033[1;31m^\033[0m\n");
+    }
+}
+
 static void print_help()
 {
     printf("HMAP v%s\n", HMAP_VERSION);
@@ -71,6 +112,7 @@ static void show_operations()
     printf("addmap        |    Adds a host to IP map (using a map string, --map).\n");
     printf("rmhost        |    Removes a host from the hosts file. Requires --spec-host.\n");
     printf("showmaps      |    Displays the maps of the hosts file.\n");
+    printf("validate      |    Validates a specified hosts file.\n");
 
     exit(EXIT_SUCCESS);
 }
@@ -145,6 +187,8 @@ static void parse_args(int argc, char* argv[])
                 opts.op = RMHOST;
             else if (strcasecmp(optarg, "showmaps") == 0)
                 opts.op = SHOWMAPS;
+            else if (strcasecmp(optarg, "validate") == 0)
+                opts.op = VALIDATE;
             else
             {
                 fprintf(stderr, "Unrecognized operation: %s. Aborting.\n", optarg);
@@ -181,8 +225,10 @@ static void validate_args()
 
 int main(int argc, char* argv[])
 {
-    struct hmap     hmap;
-    struct host_map host_map;
+    struct hmap             hmap;
+    struct host_map         host_map;
+    struct validate_context v_context;
+    int                     ext_code = 0;
 
     parse_args(argc, argv);
     validate_args();
@@ -194,7 +240,7 @@ int main(int argc, char* argv[])
 
     if (opts.op == ADDMAP)
     {
-        if (str2host_map(opts.map_string, &host_map) < 0)
+        if (host_str2host_map(opts.map_string, &host_map) < 0)
         {
             printf_error("Invalid map string. See --help and --map-format for more information.\n");
             exit(EXIT_FAILURE);
@@ -206,11 +252,23 @@ int main(int argc, char* argv[])
             exit(EXIT_FAILURE);
         }
 
+        if (!is_valid_ip(host_map.ip))
+        {
+            printf_error("'%s' is not a valid IP address.\n", host_map.ip);
+            exit(EXIT_FAILURE);
+        }
+
         for (uint8_t i = 0; i < host_map.num_hosts; ++i)
         {
             if (is_host_in_use(&hmap, host_map.hosts[i]))
             {
                 printf_error("'%s' is already pointing to an IP address.\n", host_map.hosts[i]);
+                exit(EXIT_FAILURE);
+            }
+
+            if (!is_valid_host(host_map.hosts[i]))
+            {
+                printf_error("'%s' is not a valid hostname/domain name.\n", host_map.hosts[i]);
                 exit(EXIT_FAILURE);
             }
         }
@@ -240,8 +298,15 @@ int main(int argc, char* argv[])
 
         printf_normal("Maps for %s:\n", opts.hosts_fpath);
         print_hmap(&hmap);
+    } else if (opts.op == VALIDATE)
+    {
+        if (!is_valid_hosts_file(opts.hosts_fpath, &v_context))
+        {
+            ext_code = EXIT_FAILURE;
+        }
+
+        print_validation_res(&v_context);
     }
 
-    return 0;
+    return ext_code;
 }
-
