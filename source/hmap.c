@@ -47,7 +47,7 @@ static void print_validation_res(struct validate_context* v_context)
     }
     else if (v_context->vcode == VCODE_WARNING)
     {
-        printf_warning("Warning:");
+        printf_warning("Warning: ");
         fprintf(stderr,
                 "%s:%lu:%u: \033[1;35mwarning: %s\n",
                 opts.hosts_fpath,
@@ -63,7 +63,7 @@ static void print_validation_res(struct validate_context* v_context)
     }
     else
     {
-        printf_error("Error:");
+        printf_error("Error: ");
         fprintf(stderr,
                 "%s:%lu:%u: \033[1;31merror:\033[0m %s\n",
                 opts.hosts_fpath,
@@ -298,7 +298,8 @@ int main(int argc, char* argv[])
 
         printf_normal("Maps for %s:\n", opts.hosts_fpath);
         print_hmap(&hmap);
-    } else if (opts.op == VALIDATE)
+    }
+    else if (opts.op == VALIDATE)
     {
         if (!is_valid_hosts_file(opts.hosts_fpath, &v_context))
         {

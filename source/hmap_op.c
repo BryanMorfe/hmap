@@ -36,16 +36,28 @@ __private bool is_valid_ipv6(const char* _ip)
     return true;
 }
 
+__private size_t num_whitespace(uint8_t* line, size_t line_size, size_t i)
+{
+    size_t count = 0;
+    while(i < line_size && isspace(line[i]))
+    {
+        ++i;
+        count++;
+    }
+        
+    return count;
+}
+
 __private uint16_t validate_line(char* line, size_t line_size, struct validate_context* v_context)
 {
     static const char COMMENT_CHAR = '#';
 
-    uint16_t cnum;
-    uint8_t  j = 0;
-    uint8_t  k = 0;
+    uint16_t cnum = 0;
+    uint8_t  j    = 0;
+    uint8_t  k    = 0;
     char     cword[MAX_HOSTNAME_LENGTH];
 
-    for (cnum = 0; cnum < line_size && v_context->vcode == VCODE_NONE; ++cnum)
+    while (cnum < line_size && v_context->vcode == VCODE_NONE)
     {
         if (isspace(line[cnum]))
         {
@@ -57,6 +69,8 @@ __private uint16_t validate_line(char* line, size_t line_size, struct validate_c
             else
             {
                 cword[k] = '\0';
+
+                cnum += num_whitespace((uint8_t*)line, line_size, cnum);
 
                 if (j == 0)
                 {
@@ -92,6 +106,9 @@ __private uint16_t validate_line(char* line, size_t line_size, struct validate_c
             v_context->vcode    = VCODE_ERROR;
             v_context->err_code = ERR_UNEXPECTED_CHAR;
         }
+
+        if (v_context->vcode == VCODE_NONE)
+            ++cnum;
     }
 
     if (j == 0 && cnum > 0)
@@ -116,7 +133,7 @@ __private uint16_t validate_line(char* line, size_t line_size, struct validate_c
 __private ssize_t read_line(int fd, uint8_t* _line)
 {
     static const char LINE_END_CHAR = '\n';
-    int               c;
+    char              c;
     ssize_t           line_size = 0;
     ssize_t           bytes_read;
 
@@ -146,18 +163,6 @@ __private bool file_exists(const char* path)
         return true;
 
     return false;
-}
-
-__private size_t num_whitespace(uint8_t* line, size_t line_size, size_t i)
-{
-    size_t count = 0;
-    while(i < line_size && isspace(line[i]))
-    {
-        ++i;
-        count++;
-    }
-        
-    return count;
 }
 
 __private void parse_line(uint8_t* line, size_t line_size, struct hmap* _hmap)
