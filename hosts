@@ -1,5 +1,5 @@
 127.0.0.1	localhost
-127.0.1.1	bryanmorfe-MacBookPro
+127.0.1.1	bryanmorfe-github
 
 # The following lines are desirable for IPv6 capable hosts
 ::1     ip6-localhost ip6-loopback
@@ -8,7 +8,19 @@ ff00::0 ip6-mcastprefix
 ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 
-192.168.59.86	pimiento.ctrl05 aics.ctrl05 ctrl05
+# Errors. To test validator, uncomment one line at a time
+# 1. No space before IP. When uncommenting, leave a space
+# 192.168.1.22    hello	
+# 2. Invalid IPv4
+#192.299.0.322 example.com
+# 3. Invalid IPv6
+#4312:r3r5::0
+# 4. Invalid host (unexpected character)
+#192.168.1.33 inval_host_here.com
+# 4.b. Invalid host
+#192.168.1.34 hi.inval--host.com
+# 5. Missing Host
+#192.168.1.44
+# 6. Missing IP (will report as invalid IP)
+#bryanmorfe.com
 
-# The host below was added by HMAP
-192.168.59.86	aics.ctrl05	pimiento.ctrl05
